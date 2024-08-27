@@ -1,8 +1,8 @@
 public class Car {
     private String brand;
     private String model;
-    private double gasCapacity; // Maximum gas capacity
-    private double gasConsumptionRate; // Rate of gas consumption per unit time
+    private double gasCapacity;
+    private double gasConsumptionRate;
 
     public Car(String brand, String model, double gasCapacity, double gasConsumptionRate) {
         this.brand = brand;

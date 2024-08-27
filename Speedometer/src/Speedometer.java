@@ -3,6 +3,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -38,8 +39,7 @@ public class Speedometer extends Application {
     
     private ComboBox<String> brandComboBox;
     private ComboBox<String> modelComboBox;
-    private Label carDetailsLabel;
-    Label carDetails;
+    private Label carDetails, instructionsLabel;
     
     private final HashMap<String, Double> modelGasConsumptionRates = new HashMap<>() {{
         put("Model A", 0.005);
@@ -62,7 +62,8 @@ public class Speedometer extends Application {
        // Initialize ComboBoxes
         brandComboBox = new ComboBox<>();
         modelComboBox = new ComboBox<>();
-        carDetailsLabel = new Label();
+        instructionsLabel = new Label("Press 'w' to Accelerate\nPress 's' to brake");
+        instructionsLabel.setTextFill(Color.WHITE);
 
         // Populate the ComboBoxes
         brandComboBox.getItems().addAll("Toyota", "Honda", "Ford");
@@ -76,7 +77,7 @@ public class Speedometer extends Application {
         pane.setStyle("-fx-background-color: black;");
 
         // Display car details below the speedometer
-        carDetails = new Label("Car Brand: " + car.getBrand() + " | Model: " + car.getModel());
+        carDetails = new Label();
         carDetails.setLayoutX(50);
         carDetails.setLayoutY(250);
         carDetails.setTextFill(Color.WHITE);
@@ -88,26 +89,26 @@ public class Speedometer extends Application {
 
         // Set up the layout
         brandComboBox.setLayoutX(50);
-        brandComboBox.setLayoutY(300);
-        modelComboBox.setLayoutX(200);
-        modelComboBox.setLayoutY(300);
-        carDetailsLabel.setLayoutX(50);
-        carDetailsLabel.setLayoutY(50);
-        carDetailsLabel.setTextFill(Color.WHITE);
+        brandComboBox.setLayoutY(320);
+        modelComboBox.setLayoutX(150);
+        modelComboBox.setLayoutY(320);
+        instructionsLabel.setLayoutX(10);
+        instructionsLabel.setLayoutY(10);
+        instructionsLabel.setTextFill(Color.WHITE);
 
 
         // Display the car details
         updateCar();
 
         // Add ComboBoxes and Label to the pane
-        pane.getChildren().addAll(brandComboBox, modelComboBox, carDetailsLabel);
+        pane.getChildren().addAll(brandComboBox, modelComboBox, instructionsLabel);
 
         // Load and display the background image
         ImageView speedometerImage = new ImageView(new Image("/images/speedometer.png"));
         speedometerImage.setFitWidth(400);
         speedometerImage.setFitHeight(200);
         speedometerImage.setX(50);
-        speedometerImage.setY(50);
+        speedometerImage.setY(54);
         pane.getChildren().add(speedometerImage);
 
         // Create the needle (line)
@@ -132,24 +133,12 @@ public class Speedometer extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // Handle key press events
+        // Handle key press events when car is moving
         scene.setOnKeyPressed(event -> handleKeyPress(event));
-
-        // Handle key release events
         scene.setOnKeyReleased(event -> handleKeyRelease(event));
 
         // Start a continuous decrease in speed
         startDecreasingSpeed();
-    }
-
-    private String showInputDialog(String title, String content) {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle(title);
-        dialog.setHeaderText(null);
-        dialog.setContentText(content);
-
-        Optional<String> result = dialog.showAndWait();
-        return result.orElse("");
     }
 
     private Line createNeedleLine(double initialSpeed) {
@@ -187,7 +176,7 @@ public class Speedometer extends Application {
     private Button createRefillButton() {
         Button button = new Button("Refill Gas");
         button.setLayoutX(440);
-        button.setLayoutY(300);
+        button.setLayoutY(320);
         button.setOnAction(e -> showRefillPrompt());
         return button;
     }
@@ -257,13 +246,32 @@ public class Speedometer extends Application {
         result.ifPresent(amountStr -> {
             try {
                 double refillAmount = Double.parseDouble(amountStr) / 100;
-                refillGasTank(refillAmount);
+                if(refillAmount > 1 || refillAmount < 0){
+                    showErrorPrompt("Invalid input", "Please enter a number between 0 and 100.");
+                } else {
+                    refillGasTank(refillAmount);
+                }
             } catch (NumberFormatException ex) {
-                System.out.println("Invalid input. Please enter a number between 0 and 100.");
+                showErrorPrompt("Invalid input", "Please enter a valid number.");
             }
         });
     }
 
+    /**
+     * @param title - header of the error prompt
+     * @param message - show message error
+     */
+    private void showErrorPrompt(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    /** Update Cars Detail
+     *  Including the Gas Consumptions, Brands, and Model
+     */
     private void updateCar() {
         String selectedBrand = brandComboBox.getValue();
         String selectedModel = modelComboBox.getValue();
@@ -272,9 +280,12 @@ public class Speedometer extends Application {
         car.setModel(selectedModel);
 
         // Update the car details label
-        carDetails.setText("Car Brand: " + car.getBrand() + " | Model: " + car.getModel());
+        carDetails.setText("Car Brand\t\t\t: " + car.getBrand() + "\nModel\t\t\t: " + car.getModel() + "\nGas Consumption\t: " + car.getGasConsumptionRate());
     }
 
+    /**
+     * @param amount - is the amount of gas to be refilled in a gas tank
+     */
     private void refillGasTank(double amount) {
         double currentProgress = gasTankProgressBar.getProgress();
         double newProgress = Math.min(car.getGasCapacity(), currentProgress + amount);

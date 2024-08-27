@@ -1,5 +1,5 @@
 public class Needle {
-    private double angle; // Angle in degrees
+    private double angle;
 
     public Needle() {
         this.angle = 0; // Start at 0 degrees
@@ -10,7 +10,7 @@ public class Needle {
     }
 
     public void setAngle(double angle) {
-        if (angle >= 0 && angle <= 180) { // Assuming 180 is max angle
+        if (angle >= 0 && angle <= 180) { // needle can rotate upto 180 degrees
             this.angle = angle;
         }
     }

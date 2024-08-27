@@ -10,7 +10,7 @@ public class Speed {
     }
 
     public void setSpeed(double speed) {
-        if (speed >= 0 && speed <= 180) { // Assuming max speed is 180
+        if (speed >= 0 && speed <= 180) { // Assuming max speed is 100 (180 degrees angle coming from left to right)
             this.speed = speed;
         }
     }
