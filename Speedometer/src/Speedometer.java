@@ -11,7 +11,6 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -26,13 +25,12 @@ public class Speedometer extends Application {
     private static final double CENTER_X = 250;
     private static final double CENTER_Y = 240;
     private static final double NEEDLE_LENGTH = 150;
-    private static final double MAX_GAS = 1.0; // You can set this dynamically from the Car instance
+    private static final double MAX_GAS = 100.0; // You can set this dynamically from the Car instance
+    private static final double GAS_BAR = 1.0;
     private static final double DECREASE_SPEED_INTERVAL = 0.2;
     private static final double DECREASE_SPEED_AMOUNT = 1;
     private static final double ANIMATION_DURATION = 300;
 
-    private Speed speed;
-    private Needle needle;
     private Line needleLine;
     private Timeline decreaseTimeline;
     private ProgressBar gasTankProgressBar;
@@ -47,13 +45,7 @@ public class Speedometer extends Application {
         put("Model C", 0.0005);
     }};
     
-    private Car car = new Car("Toyota", "Model A", MAX_GAS, modelGasConsumptionRates.get("Model A"));
-
-    public Speedometer() {
-        // Initialize the Car with brand, model, gas capacity, and gas consumption rate
-        this.speed = new Speed(INITIAL_SPEED);
-        this.needle = new Needle();
-    }
+    private Car car = new Car("Toyota", "Model A", GAS_BAR, modelGasConsumptionRates.get("Model A"), INITIAL_SPEED);
 
     @Override
     public void start(Stage primaryStage) {
@@ -62,7 +54,7 @@ public class Speedometer extends Application {
        // Initialize ComboBoxes
         brandComboBox = new ComboBox<>();
         modelComboBox = new ComboBox<>();
-        instructionsLabel = new Label("Press 'w' to Accelerate\nPress 's' to brake");
+        instructionsLabel = new Label("Press 'W' to Accelerate\nPress 'S' to brake");
         instructionsLabel.setTextFill(Color.WHITE);
 
         // Populate the ComboBoxes
@@ -95,7 +87,6 @@ public class Speedometer extends Application {
         instructionsLabel.setLayoutX(10);
         instructionsLabel.setLayoutY(10);
         instructionsLabel.setTextFill(Color.WHITE);
-
 
         // Display the car details
         updateCar();
@@ -135,7 +126,6 @@ public class Speedometer extends Application {
 
         // Handle key press events when car is moving
         scene.setOnKeyPressed(event -> handleKeyPress(event));
-        scene.setOnKeyReleased(event -> handleKeyRelease(event));
 
         // Start a continuous decrease in speed
         startDecreasingSpeed();
@@ -154,7 +144,7 @@ public class Speedometer extends Application {
     }
 
     private ProgressBar createGasTankProgressBar() {
-        ProgressBar progressBar = new ProgressBar(MAX_GAS);
+        ProgressBar progressBar = new ProgressBar(GAS_BAR);
         progressBar.setPrefWidth(180);
         progressBar.setPrefHeight(20);
         progressBar.setLayoutX(380);
@@ -185,31 +175,25 @@ public class Speedometer extends Application {
         switch (event.getCode()) {
             case W:
                 if (gasTankProgressBar.getProgress() > 0) {
-                    speed.increaseSpeed(DECREASE_SPEED_AMOUNT);
+                    car.increaseSpeed(DECREASE_SPEED_AMOUNT);
                     decreaseGas();
-                    animateNeedle(speed.getSpeed(), speed.getSpeed() + DECREASE_SPEED_AMOUNT);
+                    animateNeedle(car.getSpeed(), car.getSpeed() + DECREASE_SPEED_AMOUNT);
                 }
                 break;
             case S:
-                if (speed.getSpeed() > 0) {
-                    speed.decreaseSpeed(DECREASE_SPEED_AMOUNT);
-                    animateNeedle(speed.getSpeed(), speed.getSpeed() - DECREASE_SPEED_AMOUNT);
+                if (car.getSpeed() > 0) {
+                    car.decreaseSpeed(DECREASE_SPEED_AMOUNT);
+                    animateNeedle(car.getSpeed(), car.getSpeed() - DECREASE_SPEED_AMOUNT);
                 }
                 break;
-        }
-    }
-
-    private void handleKeyRelease(KeyEvent event) {
-        if (event.getCode() == KeyCode.W || event.getCode() == KeyCode.S) {
-            decreaseTimeline.playFromStart();
         }
     }
 
     private void startDecreasingSpeed() {
         decreaseTimeline = new Timeline(new KeyFrame(Duration.seconds(DECREASE_SPEED_INTERVAL), e -> {
-            if (speed.getSpeed() > 0) {
-                speed.decreaseSpeed(DECREASE_SPEED_AMOUNT);
-                animateNeedle(speed.getSpeed(), speed.getSpeed() - DECREASE_SPEED_AMOUNT);
+            if (car.getSpeed() > 0) {
+                car.decreaseSpeed(DECREASE_SPEED_AMOUNT);
+                animateNeedle(car.getSpeed(), car.getSpeed() - DECREASE_SPEED_AMOUNT);
             }
         }));
         decreaseTimeline.setCycleCount(Timeline.INDEFINITE);
@@ -240,14 +224,16 @@ public class Speedometer extends Application {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Refill Gas");
         dialog.setHeaderText("Enter the amount of gas to refill:");
-        dialog.setContentText("Amount (0 - 100):");
+        dialog.setContentText("Amount (0 - "+MAX_GAS+"):");
 
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(amountStr -> {
             try {
-                double refillAmount = Double.parseDouble(amountStr) / 100;
+                double refillAmount = Double.parseDouble(amountStr) / MAX_GAS;
                 if(refillAmount > 1 || refillAmount < 0){
-                    showErrorPrompt("Invalid input", "Please enter a number between 0 and 100.");
+                    showErrorPrompt("Invalid input", "Please enter a number between 0 and "+MAX_GAS+".");
+                } else if(car.getSpeed() > 0){
+                    showErrorPrompt("Invalid input", "Cannot refill because car is running.");
                 } else {
                     refillGasTank(refillAmount);
                 }
@@ -280,7 +266,7 @@ public class Speedometer extends Application {
         car.setModel(selectedModel);
 
         // Update the car details label
-        carDetails.setText("Car Brand\t\t\t: " + car.getBrand() + "\nModel\t\t\t: " + car.getModel() + "\nGas Consumption\t: " + car.getGasConsumptionRate());
+        carDetails.setText("Car Brand\t\t\t: " + car.getBrand() + "\nModel\t\t\t: " + car.getModel() + "\nGas Consumption\t: " + car.getGasConsumptionRate()*MAX_GAS+"L/km");
     }
 
     /**
