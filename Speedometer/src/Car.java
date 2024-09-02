@@ -1,13 +1,15 @@
 public class Car {
     private String brand, model;
-    private double gasCapacity, gasConsumptionRate, speed;
+    private double gasCapacity, gasConsumptionRate, currentSpeed, accelerationRate, deaccelerationRate;
 
-    public Car(String brand, String model, double gasCapacity, double gasConsumptionRate, double speed) {
+    public Car(String brand, String model, double gasCapacity, double gasConsumptionRate, double currentSpeed, double accelerationRate, double deaccelerationRate) {
         this.brand = brand;
         this.model = model;
         this.gasCapacity = gasCapacity;
         this.gasConsumptionRate = gasConsumptionRate;
-        this.speed = speed;
+        this.currentSpeed = currentSpeed;
+        this.accelerationRate = accelerationRate;
+        this.deaccelerationRate = deaccelerationRate;
     }
 
     public String getBrand() {
@@ -39,20 +41,36 @@ public class Car {
     }
 
     public double getSpeed() {
-        return speed;
+        return currentSpeed;
     }
 
     public void setSpeed(double speed) {
         if (speed >= 0 && speed <= 180) { // Assuming max speed is 100 (180 degrees angle coming from left to right)
-            this.speed = speed;
+            this.currentSpeed = speed;
+        } else if (speed < 0) {
+            this.currentSpeed = 0;
         }
     }
 
     public void increaseSpeed(double increment) {
-        setSpeed(this.speed + increment);
+        setSpeed(this.currentSpeed + increment);
     }
 
     public void decreaseSpeed(double decrement) {
-        setSpeed(this.speed - decrement);
+        setSpeed(this.currentSpeed - decrement);
+    }
+
+    public double GetAccelerationRate() {
+        return accelerationRate;
+    }
+    public void SetAccelerationRate(double accelerationRate) {
+        this.accelerationRate = accelerationRate;
+    }
+
+    public double GetDeaccelerationRate() {
+        return deaccelerationRate;
+    }
+    public void SetDeaccelerationRate(double deaccelerationRate) {
+        this.deaccelerationRate = deaccelerationRate;
     }
 }
